@@ -1,22 +1,33 @@
 package main.google.smart_home.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.android.gms.tasks.Task;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+
+import java.io.IOException;
 
 @Service
 public class GeminiService {
 
-    private final RestTemplate restTemplate;
-    private final String apiKey;
+    private final TextRecognizer textRecognizer;
 
-    public GeminiService(RestTemplate restTemplate, @Value("${gemini.api.key}") String apiKey) {
-        this.restTemplate = restTemplate;
-        this.apiKey = apiKey;
+    @Autowired
+    public GeminiService(TextRecognizer textRecognizer) {
+        this.textRecognizer = textRecognizer;
     }
 
-    public String getGeminiData(String parameter) {
-        String url = String.format("https://api.gemini.com/v1/some-endpoint?param=%s&key=%s", parameter, apiKey);
-        return restTemplate.getForObject(url, String.class);
+    public void performAction(InputImage image) {
+        Task<Text> result =
+                textRecognizer.process(image)
+                        .addOnSuccessListener(firebaseVisionText -> {
+                            System.out.println(firebaseVisionText.getText());
+                        })
+                        .addOnFailureListener(
+                                e -> {
+                                    e.printStackTrace();
+                                });
     }
 }
